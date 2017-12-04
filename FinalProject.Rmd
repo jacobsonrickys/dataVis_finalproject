@@ -1,0 +1,77 @@
+---
+title: "FinalProject.Rmd"
+author: "Group 9"
+date: "12/1/2017"
+resource_files:
+- .Renviron
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+runtime: shiny
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+require(data.world)
+require(MASS)
+require(ISLR)
+require(dplyr)
+require(ggplot2)
+```
+
+## Non SELECT * SQL
+
+Import the data from data.world, where the bulk of the work is done on the back end.
+
+```{r}
+project <- "https://data.world/rc38246/f-17-edv-project-5"
+data.world::set_config(cfg_env("DW_API"))
+schools <- data.world::query(
+  data.world::qry_sql("SELECT latitude, longitude, school_name FROM schools WHERE grades = 'Elementary' and school_type = 'public'"),
+  dataset = project
+  )
+
+attach(schools)
+```
+
+## Gathering Data
+
+Here, we grouped the data by agent (agent_key) and plotted the number of calls where the offer was given, the number of calls where the offer was accepted, and the number of calls where the offer was applied. To do this, we needed to reformat the data using the gather tool. In looking at the results, we see a rather consistent gap between the lines. This suggests that the number of clients who received the offer but did not accept remained about the same from agent to agent. Likewise, the number of clients who accepted the offer but did not apply it remained about the same amongst the agents as well.
+
+```{r echo=FALSE}
+
+renderPlot({
+  schools %>% ggplot(aes(longitude, latitude)) + geom_point()
+})
+# grouped <- data %>% dplyr::group_by(agent_key) %>% summarise(sum_with_offer = sum(calls_with_offer), sum_with_accept = sum(calls_with_accept), sum_offer_applied = sum(calls_offer_applied)) 
+# 
+# gathered <- grouped %>% tidyr::gather(variable,value, -agent_key)
+# 
+# renderPlot({
+#   gathered %>% ggplot(aes(x = agent_key, y = value, color = variable)) + geom_smooth(se = FALSE)
+# })
+# 
+# attach(grouped)
+```
+
+## dplyr Stuff
+
+Looking into most successful agents and teams
+topics coverered - piplines. select, mutate , group_by, summarize, arrange
+```{r echo = FALSE}
+# data_SA = data %>% dplyr::select(agent_key, agent_name, calls_with_accept, calls, team_lead_id) %>% dplyr::mutate(call_acceptance_rate = calls_with_accept / calls) %>% dplyr::group_by(agent_key, agent_name,team_lead_id) %>% dplyr::summarize(avg_calls_with_a = mean(calls_with_accept), avg_calls = mean(calls), avg_call_acceptance_rate = mean(call_acceptance_rate))
+# 
+# data_SA_sort = data_SA %>% dplyr::arrange(desc(avg_call_acceptance_rate))
+# 
+# data_SA_sort = data_SA %>% dplyr::arrange(avg_call_acceptance_rate)
+# 
+# teams = data_SA %>% dplyr::select(team_lead_id, avg_calls, avg_call_acceptance_rate) %>% dplyr::group_by(team_lead_id) %>% dplyr::summarize(mean(avg_calls), mean(avg_call_acceptance_rate))
+# 
+# renderPlot({
+#   ggplot(data = teams, aes(x=`mean(avg_calls)`, y = `mean(avg_call_acceptance_rate)`)) + geom_line()
+# })
+
+```
