@@ -36,7 +36,7 @@ schools <- data.world::query(
 attach(schools)
 ```
 
-## Gathering Data
+## How many apartments are within a certain distance of how many public elementary schools?
 
 ```{r echo=FALSE}
 R = 6371
@@ -45,13 +45,14 @@ deg2rad <- function(deg) {(deg * pi) / (180)}
 distances <- schools %>% dplyr::mutate(dLat = deg2rad(slat-alat), dLon = deg2rad(slong-along), a = sin(dLat/2)*sin(dLat/2)+cos(deg2rad(slat))*cos(deg2rad(alat))*sin(dLon/2)*sin(dLon/2), c = 2*atan2(sqrt(a), sqrt(1-a)), dist = R*c) %>% dplyr::select(school_name,apartment_name,dist)
 
 # How many schools are within 5 km of each apartment
-grouped <- distances %>% dplyr::filter(dist <= 5) %>% dplyr::group_by(apartment_name) %>% dplyr::summarise(num_schools = n())
+# grouped <- distances %>% dplyr::filter(dist <= 1) %>% dplyr::group_by(apartment_name) %>% dplyr::summarise(num_schools = n())
 
 # how many apartments are within 5 km of how many schools
 # regrouped <- grouped %>% dplyr::group_by(num_schools) %>% summarise(num_apartments = n())
+sliderInput("range", "Range (in km):", min = 1, max = 10, value = 5)
 
 renderPlot({
-  grouped %>% ggplot(aes(num_schools)) + geom_bar()
+  distances %>% dplyr::filter(dist <= input$range) %>% dplyr::group_by(apartment_name) %>% dplyr::summarise(num_schools = n()) %>% ggplot(aes(num_schools)) + geom_bar()
 })
 # grouped <- data %>% dplyr::group_by(agent_key) %>% summarise(sum_with_offer = sum(calls_with_offer), sum_with_accept = sum(calls_with_accept), sum_offer_applied = sum(calls_offer_applied)) 
 # 
