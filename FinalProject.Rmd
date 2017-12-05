@@ -36,7 +36,8 @@ schools <- data.world::query(
 attach(schools)
 ```
 
-## How many apartments are within a certain distance of how many public elementary schools?
+## How many apartments are near how many public elementary schools?
+Adjusting the slider below changes the range. If we set the slider to it's maximum value, we see that all apartments in the data set are within 10 km from more than one public elementary school. This suggests that the government of Atlanta have done a good job at ensuring taht 
 
 ```{r echo=FALSE}
 R = 6371
