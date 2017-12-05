@@ -33,12 +33,12 @@ schools <- data.world::query(
   data.world::qry_sql("SELECT s.latitude AS slat, s.longitude AS slong, school_name, a.latitude AS alat, a.longitude AS along, apartment_name FROM schools AS s cross join apartments AS a WHERE s.grades = 'Elementary' and school_type = 'public'"),
   dataset = project
   )
-places <- data.world::query(
-  data.world::qry_sql("SELECT place_name, place, market_time, school_time FROM places JOIN times using(place_id)"),
+times <- data.world::query(
+  data.world::qry_sql("SELECT apartment_name, market_time, school_time FROM apartments JOIN times using(place_id)"),
   dataset = project
   )
 attach(schools)
-attach(places)
+attach(times)
 ```
 
 ## How many apartments are near how many public elementary schools?
@@ -62,15 +62,6 @@ sliderInput("range", "Range (in km):", min = 1, max = 10, value = 5)
 renderPlot({
   distances %>% dplyr::filter(dist <= input$range) %>% dplyr::group_by(apartment_name) %>% dplyr::summarise(num_schools = n()) %>% ggplot(aes(num_schools)) + geom_bar() + labs(x = "Number of Schools", y = "Number of Apartments")
 })
-# grouped <- data %>% dplyr::group_by(agent_key) %>% summarise(sum_with_offer = sum(calls_with_offer), sum_with_accept = sum(calls_with_accept), sum_offer_applied = sum(calls_offer_applied)) 
-# 
-# gathered <- grouped %>% tidyr::gather(variable,value, -agent_key)
-# 
-# renderPlot({
-#   gathered %>% ggplot(aes(x = agent_key, y = value, color = variable)) + geom_smooth(se = FALSE)
-# })
-# 
-# attach(grouped)
 ```
 
 ## dplyr Stuff
@@ -78,16 +69,9 @@ renderPlot({
 Looking into most successful agents and teams
 topics coverered - piplines. select, mutate , group_by, summarize, arrange
 ```{r echo = FALSE}
-# data_SA = data %>% dplyr::select(agent_key, agent_name, calls_with_accept, calls, team_lead_id) %>% dplyr::mutate(call_acceptance_rate = calls_with_accept / calls) %>% dplyr::group_by(agent_key, agent_name,team_lead_id) %>% dplyr::summarize(avg_calls_with_a = mean(calls_with_accept), avg_calls = mean(calls), avg_call_acceptance_rate = mean(call_acceptance_rate))
-# 
-# data_SA_sort = data_SA %>% dplyr::arrange(desc(avg_call_acceptance_rate))
-# 
-# data_SA_sort = data_SA %>% dplyr::arrange(avg_call_acceptance_rate)
-# 
-# teams = data_SA %>% dplyr::select(team_lead_id, avg_calls, avg_call_acceptance_rate) %>% dplyr::group_by(team_lead_id) %>% dplyr::summarize(mean(avg_calls), mean(avg_call_acceptance_rate))
-# 
-# renderPlot({
-#   ggplot(data = teams, aes(x=`mean(avg_calls)`, y = `mean(avg_call_acceptance_rate)`)) + geom_line()
-# })
+renderPlot({
+  times %>% tidyr::gather(variable, value, -apartment_name) %>% ggplot(aes(x = apartment_name, y = value, color = variable)) + geom_point()
+})
+
 
 ```
