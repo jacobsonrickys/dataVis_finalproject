@@ -33,11 +33,18 @@ schools <- data.world::query(
   data.world::qry_sql("SELECT s.latitude AS slat, s.longitude AS slong, school_name, a.latitude AS alat, a.longitude AS along, apartment_name FROM schools AS s cross join apartments AS a WHERE s.grades = 'Elementary' and school_type = 'public'"),
   dataset = project
   )
+places <- data.world::query(
+  data.world::qry_sql("SELECT place_name, place, market_time, school_time FROM places JOIN times using(place_id)"),
+  dataset = project
+  )
 attach(schools)
+attach(places)
 ```
 
 ## How many apartments are near how many public elementary schools?
-Adjusting the slider below changes the range. If we set the slider to it's maximum value, we see that all apartments in the data set are within 10 km from more than one public elementary school. This suggests that the government of Atlanta have done a good job at ensuring taht 
+Adjusting the slider below changes the range. If we set the slider to it's minimum value, we see that all apartments in the data set are within 1 km from a public elementary school. This means that the local municipalities did a good job of ensuring public education for their constituents.
+
+Increasing the range causes the data to take a Boltzmann-like distribution, which means that the majority of apartments are near only a handful of schools, and the number of outliers decrease as you progress rightward on the graph. 
 
 ```{r echo=FALSE}
 R = 6371
@@ -53,7 +60,7 @@ distances <- schools %>% dplyr::mutate(dLat = deg2rad(slat-alat), dLon = deg2rad
 sliderInput("range", "Range (in km):", min = 1, max = 10, value = 5)
 
 renderPlot({
-  distances %>% dplyr::filter(dist <= input$range) %>% dplyr::group_by(apartment_name) %>% dplyr::summarise(num_schools = n()) %>% ggplot(aes(num_schools)) + geom_bar()
+  distances %>% dplyr::filter(dist <= input$range) %>% dplyr::group_by(apartment_name) %>% dplyr::summarise(num_schools = n()) %>% ggplot(aes(num_schools)) + geom_bar() + labs(x = "Number of Schools", y = "Number of Apartments")
 })
 # grouped <- data %>% dplyr::group_by(agent_key) %>% summarise(sum_with_offer = sum(calls_with_offer), sum_with_accept = sum(calls_with_accept), sum_offer_applied = sum(calls_offer_applied)) 
 # 
