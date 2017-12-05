@@ -30,21 +30,28 @@ Import the data from data.world, where the bulk of the work is done on the back 
 project <- "https://data.world/rc38246/f-17-edv-project-5"
 data.world::set_config(cfg_env("DW_API"))
 schools <- data.world::query(
-  data.world::qry_sql("SELECT latitude, longitude, school_name FROM schools WHERE grades = 'Elementary' and school_type = 'public'"),
+  data.world::qry_sql("SELECT s.latitude AS slat, s.longitude AS slong, school_name, a.latitude AS alat, a.longitude AS along, apartment_name FROM schools AS s cross join apartments AS a WHERE s.grades = 'Elementary' and school_type = 'public'"),
   dataset = project
   )
-
 attach(schools)
 ```
 
 ## Gathering Data
 
-Here, we grouped the data by agent (agent_key) and plotted the number of calls where the offer was given, the number of calls where the offer was accepted, and the number of calls where the offer was applied. To do this, we needed to reformat the data using the gather tool. In looking at the results, we see a rather consistent gap between the lines. This suggests that the number of clients who received the offer but did not accept remained about the same from agent to agent. Likewise, the number of clients who accepted the offer but did not apply it remained about the same amongst the agents as well.
-
 ```{r echo=FALSE}
+R = 6371
+deg2rad <- function(deg) {(deg * pi) / (180)}
+# Determines the curvilinear distance between two coordinates in km
+distances <- schools %>% dplyr::mutate(dLat = deg2rad(slat-alat), dLon = deg2rad(slong-along), a = sin(dLat/2)*sin(dLat/2)+cos(deg2rad(slat))*cos(deg2rad(alat))*sin(dLon/2)*sin(dLon/2), c = 2*atan2(sqrt(a), sqrt(1-a)), dist = R*c) %>% dplyr::select(school_name,apartment_name,dist)
+
+# How many schools are within 5 km of each apartment
+grouped <- distances %>% dplyr::filter(dist <= 5) %>% dplyr::group_by(apartment_name) %>% dplyr::summarise(num_schools = n())
+
+# how many apartments are within 5 km of how many schools
+# regrouped <- grouped %>% dplyr::group_by(num_schools) %>% summarise(num_apartments = n())
 
 renderPlot({
-  schools %>% ggplot(aes(longitude, latitude)) + geom_point()
+  grouped %>% ggplot(aes(num_schools)) + geom_bar()
 })
 # grouped <- data %>% dplyr::group_by(agent_key) %>% summarise(sum_with_offer = sum(calls_with_offer), sum_with_accept = sum(calls_with_accept), sum_offer_applied = sum(calls_offer_applied)) 
 # 
