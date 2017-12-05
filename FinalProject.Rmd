@@ -22,6 +22,37 @@ require(dplyr)
 require(ggplot2)
 ```
 
+## Data Cleaning 
+We initially had 20 tables to clean - so for simplicity's sake we will just show an example of how we cleaned a few of these twenty. 
+
+```{r, eval = FALSE}
+daycare	=	read_csv("/Users/amandale/Downloads/stcyngyn-fall-2017-edvproject-5/day_care_centers.csv", col_types = cols(
+  place_id = col_character(),
+  zipcode = col_integer(),
+  place_type = col_character(),
+  place_name = col_character(),
+  latitude = col_double(),
+  longitude = col_double(),
+  website_url = col_character(),
+  property_address = col_character(),
+  map_url = col_character(),
+  phone = col_character(),
+  opening_hours = col_character()
+))
+
+daycare = daycare %>% dplyr::select(place_id, zipcode, place_type, place_name, latitude, longitude, opening_hours)
+
+for(n in names(daycare)){
+  daycare[n] <- data.frame(lapply(daycare[n], gsub, pattern="[^ -~]",replacement = ""))
+}
+
+write_csv(daycare, "/Users/amandale/Downloads/DataCleaning/daycarecenters.csv")
+
+```
+
+We also 
+
+
 ## Non SELECT * SQL
 
 Import the data from data.world, where the bulk of the work is done on the back end.
@@ -37,6 +68,35 @@ places <- data.world::query(
   data.world::qry_sql("SELECT place_name, place, market_time, school_time FROM places JOIN times using(place_id)"),
   dataset = project
   )
+zcta <- data.world::query(
+  data.world::qry_sql("SELECT usa_zcta.zcta , usa_zcta.b25001_001 as housing_units , usa_zcta.b25058_001 as median_rent, usa_zcta.b25071_001 as rent_percentage_of_income
+FROM usa_zcta"),
+  dataset = project
+)
+
+zipcodes = c(30004,30005, 30009, 30012, 30013, 30017, 30021, 30023, 30024, 30028, 30030,30031,
+             30032, 30033, 30034, 30035, 30038, 30039, 30040, 30043, 30047, 30052, 30058,
+             30062, 30066, 30072, 30074, 30075, 30076, 30077, 30078, 30079)
+zcta = zcta %>% dplyr::filter(is.element(zcta, zipcodes))
+
+apartments <- data.world::query(
+  data.world::qry_sql("SELECT apartments.apartment_name, apartments.latitude, apartments.longitude, apartments.place_id, apartments.zipcode
+FROM apartments"),
+  dataset = project
+)
+
+daycare <- data.world::query(
+  data.world::qry_sql("SELECT daycarecenters.place_id, daycarecenters.zipcode, daycarecenters.place_type, daycarecenters.place_name,
+daycarecenters.latitude, daycarecenters.longitude, daycarecenters.location, daycarecenters.opening_hours
+FROM daycarecenters"),
+  dataset = project
+)
+
+units <- data.world::query(
+  data.world::qry_sql("SELECT * from units"),
+  dataset = project
+)
+
 attach(schools)
 attach(places)
 ```
