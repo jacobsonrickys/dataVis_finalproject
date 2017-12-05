@@ -21,6 +21,13 @@ require(ISLR)
 require(dplyr)
 require(ggplot2)
 ```
+## Data Model
+
+![Our original data model was rather messy, as we had ~20 tables as well as the US Census Data.](/Users/amandale/Desktop/Screen Shot 2017-11-28 at 5.47.20 PM.png)
+
+![After an extensive process of cleaning data, this is the resulting data model.](/Users/amandale/Desktop/Screen Shot 2017-11-29 at 12.12.44 AM.png)
+
+
 
 ## Data Cleaning 
 We initially had 20 tables to clean - so for simplicity's sake we will just show an example of how we cleaned a few of these twenty. 
@@ -50,7 +57,27 @@ write_csv(daycare, "/Users/amandale/Downloads/DataCleaning/daycarecenters.csv")
 
 ```
 
-We also 
+We also have a slew of tables that should be combined into one. This also involved changing the column names as well as creating a new column. The code we used to do this is below: 
+```{r, eval=FALSE}
+driver_serv = dplyr::mutate(driver_serv, place = "driver service")
+esl = dplyr::mutate(esl, place = "esl")
+grocery = dplyr::mutate(grocery, place = "grocery store")
+markets = dplyr::mutate(markets, place = "market")
+
+names(markets)[3] = "place_type"
+names(markets)[4] = "place_name"
+
+pcp = dplyr::mutate(pcp, place = "primary care location")
+supermarkets = dplyr::mutate(supermarkets, place = "supermarket")
+worship = dplyr::mutate(worship, place = "place of worship")
+places = rbind(driver_serv, esl)
+places = rbind(places, grocery)
+places = rbind(places, markets)
+places = rbind(places, pcp)
+places = rbind(places, supermarkets)
+places = rbind(places, worship)
+
+```
 
 
 ## Non SELECT * SQL
