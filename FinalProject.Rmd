@@ -88,7 +88,7 @@ places = rbind(places, worship)
 Import the data from data.world, where the bulk of the work is done on the back end.
 
 
-```{r}
+```{r, message = FALSE}
 project <- "https://data.world/rc38246/f-17-edv-project-5"
 data.world::set_config(cfg_env("DW_API"))
 schools <- data.world::query(
@@ -168,6 +168,7 @@ attach(schools)
 attach(times)
 ```
 
+<<<<<<< HEAD
 #<a name="tableau"></a>**Initial Exploratory Analysis**
 ```{r}
 #allplaces
@@ -178,6 +179,8 @@ renderPlot({
 ```
 <iframe align = "center" width = "800" height = "800" src="https://public.tableau.com/profile/rebekah.chang#!/vizhome/PlaceType/PlaceType"/>
 
+=======
+>>>>>>> a1d94a18051433947a97c2aa5271e22ed4f3ded0
 #<a name="resources"></a>**Resources**
 ## Types of Resources
 This cross-tab lists the types of resources within each zipcodes. There is no doubt that coming into a foreign place with little understanding of a culture is difficult, and the zipcodes that are most rich in resources can mean that refugees have just a slightly easier time getting settled, especially when it comes to local government offices to register their identities, grocery stores for sustenance, and places of worship, where they may find people coming from similar circumstances, and build connections, and communities of people who support each other while adjusting.
@@ -204,7 +207,7 @@ The fact that charter schools are even in the data may be a hopeful sign that so
 ---
 We do not have any data for private schools in this table; considering refugee's circumstances, they may lack resources to pay tuition for private schools.
 
-## 
+ 
 
 #<a name="apts"></a>**Schools and Apartments**
 ## How many schools are in range of how many apartments?
@@ -228,7 +231,7 @@ renderPlot({
 #<a name="units"></a>**Units**
 ##Housing Units vs Median Rent
 The less rent costs, the bigger the percentage it takes from a family's, or one refugee's income, which Amanda has mentioned in a previous insight was odd. I wanted to attempt to put two of her visualizations into one, and this combined visualization agrees with her statement that when there is plenty of housing, the percentage it takes from income also decreases. 
-```{r}
+```{r, warning = FALSE}
 r <- ggplot(housing, aes(x=rent_percentage_of_income))
 r <- r + geom_line(aes(y = housing_units, colour = "Rent Percentage of Income"))
   
@@ -296,7 +299,7 @@ r
  # xlab("Zipcode") + ylab("Place Type")
 #}, height = 500, width = 1200)
 ```
-#<a name="race"></a>**Race Data (Title WIP)**
+#<a name="race"></a>**Homeowner Demographics**
 The chart below tracks the time it takes to get from an apartment to the nearest market and school graphed against the percentage of the population that is white. Since Atlanta is in the South, historical racial segregation would lead to the assumption that conditions would worsen as communities become less white. This would theoretically manifest itself as longer travel times to get to school and the market. The chart below, however, tells a very different story.
 ```{r}
 times <- times %>% dplyr::filter(is.element(zipcode, zipcodes)) %>% dplyr::mutate(market_time = dplyr::if_else(grepl("hour",mtime), 60*as.numeric(unlist(strsplit(mtime," "))[1])+as.numeric(unlist(strsplit(mtime," "))[3]),as.numeric(unlist(strsplit(mtime," "))[1])), school_time = dplyr::if_else(grepl("hour",stime), 60*as.numeric(unlist(strsplit(stime," "))[1])+as.numeric(unlist(strsplit(stime," "))[3]),as.numeric(unlist(strsplit(stime," "))[1]))) %>% dplyr::select(-mtime,-stime,-zipcode)
@@ -526,6 +529,6 @@ data model [1](#model)
 read_csv [1](#clean)    
 write_csv [1](#clean)    
 regular expressions [1](#clean)  
-tidyr::gather [1](#race)
+tidyr::gather [1](#race)  
 interactive visualizations [1](#apts) [2](#rfg)  
 
