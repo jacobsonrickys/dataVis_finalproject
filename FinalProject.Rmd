@@ -76,7 +76,6 @@ places = rbind(places, markets)
 places = rbind(places, pcp)
 places = rbind(places, supermarkets)
 places = rbind(places, worship)
-
 ```
 
 
@@ -159,6 +158,32 @@ renderPlot({
 # 
 # attach(grouped)
 ```
+
+##Ideal Refugee Location, pt. 2
+
+```{r}
+ggplot(data = zcta, mapping = aes(x=zcta, y=median_rent)) + geom_boxplot() + ggtitle("Rent Dist. by Zip")
+
+ggplot(data = zcta, mapping = aes(x=zcta, y=rent_percentage_of_income)) + geom_boxplot() + ggtitle("Rent % by Zip")
+
+ggplot(data = zcta, mapping = aes(x=zcta, y=median_rent)) + geom_boxplot() + ggtitle("Rent Dist. by Zip")
+
+zcta2 = zcta %>% dplyr::mutate(accessible_housing = housing_units/median_rent)
+ggplot(data = zcta2, mapping = aes(x=zcta, y=accessible_housing)) + geom_boxplot() + ggtitle("Accessible Housing by Zip")
+```
+
+##Housing, pt. 1
+
+```{r}
+ggplot(data = zcta, mapping = aes(x=zcta, y=housing_units)) + geom_bar(stat="identity") + ggtitle("Housing Units Available by Zip")
+
+ggplot(data = zcta, mapping = aes(x=rent_percentage_of_income, y=median_rent)) + geom_point() + geom_smooth(method = lm, fullrange= TRUE, se=FALSE, color = "black" ) + ggtitle("Rent Analytics ") 
+
+zcta3 = zcta %>% dplyr::mutate(housing_plentiful = ifelse(housing_units < 5000, "false", "true"))
+
+ggplot(data = zcta3, mapping = aes(x=rent_percentage_of_income, y=median_rent, color = housing_plentiful)) + geom_point() + geom_smooth(method = lm, fullrange= TRUE, se=FALSE ) + ggtitle("Rent Analytics 2")
+```
+
 
 ## dplyr Stuff
 
