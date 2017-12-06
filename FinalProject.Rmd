@@ -22,6 +22,8 @@ require(MASS)
 require(ISLR)
 require(dplyr)
 require(ggplot2)
+require(gridExtra)
+require(reshape2)
 ```
 #<a name="model"></a>**Data Model**
 
@@ -96,9 +98,21 @@ places <- data.world::query(
   data.world::qry_sql("SELECT place_name, place, market_time, school_time FROM places JOIN times using(place_id)"),
   dataset = project
   )
+
+places2 <- data.world::query(
+  data.world::qry_sql("SELECT places.place_id, places.zipcode, places.place_type, places.place_name, places.latitude, places.longitude, places.place
+FROM places"),
+  dataset = project
+)
+
 zcta <- data.world::query(
-  data.world::qry_sql("SELECT usa_zcta.zcta , usa_zcta.b25001_001 as housing_units , usa_zcta.b25058_001 as median_rent, usa_zcta.b25071_001 as rent_percentage_of_income
-FROM usa_zcta"),
+  data.world::qry_sql("SELECT usa_zcta.zcta , usa_zcta.b25001_001 as housing_units , usa_zcta.b25058_001 as median_rent, usa_zcta.b25071_001 as rent_percentage_of_income,
+usa_zcta.b25003a_001/usa_zcta.b25003_001 as white_homeowners,
+usa_zcta.b25003b_001/usa_zcta.b25003_001 as black_homeowners,
+usa_zcta.b25003c_001/usa_zcta.b25003_001 as native_homeowners,
+usa_zcta.b25003d_001/usa_zcta.b25003_001 as asian_homeowners,
+usa_zcta.b25003e_001/usa_zcta.b25003_001 as pacific_islander_homeowners,
+usa_zcta.b25003f_001/usa_zcta.b25003_001 as other_homeowners FROM usa_zcta"),
   dataset = project
 )
 
@@ -167,48 +181,93 @@ renderPlot({
 
 #<a name="race"></a>**Race Data (Title WIP)**
 
-#<a name="rfg"></a>**Ideal Refugee Location, pt. 2**
-```{r}
-ggplot(data = zcta, mapping = aes(x=zcta, y=median_rent)) + geom_boxplot() + ggtitle("Rent Dist. by Zip")
+#<a name="rfg"></a>**Ideal Housing**
+First I created a series of boxplots to visualize multiple variables on our "ideal zipcode" subset discovered [here](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyLLFqp4RQGq5XUjes1Op_image.png&id=df0e03e7-38da-4bf1-9deb-ed10e35771d9&source=sb).
+```{r, warning = FALSE}
 
-ggplot(data = zcta, mapping = aes(x=zcta, y=rent_percentage_of_income)) + geom_boxplot() + ggtitle("Rent % by Zip")
+plot1 = ggplot(data = zcta, mapping = aes(x=zcta, y=median_rent)) + geom_boxplot() + ggtitle("Rent Dist")
 
-ggplot(data = zcta, mapping = aes(x=zcta, y=median_rent)) + geom_boxplot() + ggtitle("Rent Dist. by Zip")
+plot2 = ggplot(data = zcta, mapping = aes(x=zcta, y=rent_percentage_of_income)) + geom_boxplot() + ggtitle("Rent %")
+
+plot3 = ggplot(data = zcta, mapping = aes(x=zcta, y=housing_units)) + geom_boxplot() + ggtitle("Units")
 
 zcta2 = zcta %>% dplyr::mutate(accessible_housing = housing_units/median_rent)
-ggplot(data = zcta2, mapping = aes(x=zcta, y=accessible_housing)) + geom_boxplot() + ggtitle("Accessible Housing by Zip")
+
+plot4 = ggplot(data = zcta2, mapping = aes(x=zcta, y=accessible_housing)) + geom_boxplot() + ggtitle("Acc. Housing")
+
+grid.arrange(plot1, plot2, plot3, plot4, ncol=4) 
+
+```
+The most important to notice is the "accessible housing" score. This is a calculated field, where "accessible housing" = "housing units" / "median rent". We will use this later in evalutating ideal zipcodes for refugees to reside in. Ideally, we would like an "accessible housing" score of at least 15. 
+
+Next we look at how many units are available per zipcode: 
+```{r}
+ggplot(data = zcta, mapping = aes(x=zcta, y=housing_units)) + geom_bar(stat="identity") + ggtitle("Housing Units Available by Zip") + scale_x_discrete()
 ```
 
-#<a name="housing"></a>**Housing, pt. 1**
+At first glance, as the rent percentage increases, median rent decreases. Does this intuitively make sense?
 ```{r}
-ggplot(data = zcta, mapping = aes(x=zcta, y=housing_units)) + geom_bar(stat="identity") + ggtitle("Housing Units Available by Zip")
-
 ggplot(data = zcta, mapping = aes(x=rent_percentage_of_income, y=median_rent)) + geom_point() + geom_smooth(method = lm, fullrange= TRUE, se=FALSE, color = "black" ) + ggtitle("Rent Analytics ") 
+```
 
+Answer: Not really. We then created a parameter called "housing_fence", as we are primarily interested in zipcodes with plenty of housing. In this example, our "housing_fence" is 5000. 
+```{r}
 zcta3 = zcta %>% dplyr::mutate(housing_plentiful = ifelse(housing_units < 5000, "false", "true"))
-
 ggplot(data = zcta3, mapping = aes(x=rent_percentage_of_income, y=median_rent, color = housing_plentiful)) + geom_point() + geom_smooth(method = lm, fullrange= TRUE, se=FALSE ) + ggtitle("Rent Analytics 2")
 ```
+We can see that rent goes down when there is plenty of housing - which makes a lot more sense.
 
+Experiment below with changing the "housing fence," and how it affects trend lines in segregated groups. 
 
-#<a name="dplyr"></a>**dplyr stuff**
+```{r}
+housing_min = min(zcta$housing_units)
+housing_max = max(zcta$housing_units)
 
-Looking into most successful agents and teams
-topics coverered - piplines. select, mutate , group_by, summarize, arrange
-```{r echo = FALSE}
-# data_SA = data %>% dplyr::select(agent_key, agent_name, calls_with_accept, calls, team_lead_id) %>% dplyr::mutate(call_acceptance_rate = calls_with_accept / calls) %>% dplyr::group_by(agent_key, agent_name,team_lead_id) %>% dplyr::summarize(avg_calls_with_a = mean(calls_with_accept), avg_calls = mean(calls), avg_call_acceptance_rate = mean(call_acceptance_rate))
-# 
-# data_SA_sort = data_SA %>% dplyr::arrange(desc(avg_call_acceptance_rate))
-# 
-# data_SA_sort = data_SA %>% dplyr::arrange(avg_call_acceptance_rate)
-# 
-# teams = data_SA %>% dplyr::select(team_lead_id, avg_calls, avg_call_acceptance_rate) %>% dplyr::group_by(team_lead_id) %>% dplyr::summarize(mean(avg_calls), mean(avg_call_acceptance_rate))
-# 
-# renderPlot({
-#   ggplot(data = teams, aes(x=`mean(avg_calls)`, y = `mean(avg_call_acceptance_rate)`)) + geom_line()
-# })
+sliderInput("varFence", "Housing Fence:", min = housing_min, max = housing_max, value = 5)
 
+renderPlot({
+  zcta %>% dplyr::mutate(housing_plentiful = ifelse(housing_units < input$varFence, "false", "true")) %>% ggplot( mapping = aes(x=rent_percentage_of_income, y=median_rent, color = housing_plentiful)) + geom_point() + geom_smooth(method = lm, fullrange= TRUE, se=FALSE ) + ggtitle("Rent Analytics 3")
+})
 ```
+
+We then take the top 10 zipcodes of this subset by the availability of housing units. I wanted to look at the racial makeup of these areas - the reasoning being that greater diversity results in an easier acclimation into the community for refugees. 
+```{r}
+zcta4 = zcta %>% dplyr::arrange(desc(housing_units)) %>% dplyr::top_n(10, housing_units) %>% dplyr::mutate(minority_perc = 1 - white_homeowners)
+ggplot(data = zcta4, mapping = aes(x=zcta, y=minority_perc)) + geom_bar(stat="identity")+ggtitle("% of Minority Homeowners by Zipcode") + scale_x_discrete()
+```
+
+When we take zipcodes with greater than 25% minorities, we get the following zipcodes:
+```{r}
+zcta5 = zcta4 %>% dplyr::filter(minority_perc > .25)
+zcta5$zcta
+```
+
+Lastly, we will look at the variety of places available in these four zipcodes: 
+```{r, warning = FALSE}
+places3 = places2 %>% dplyr::filter(is.element(zipcode, zcta5$zcta)) %>% select(zipcode, place_type) %>% dplyr::group_by(zipcode, place_type) %>% summarise(num_place= n())
+
+places4 = dcast(data = places3, formula(zipcode~place_type, value.var = num_place, fun.aggregate = sum))
+places4 = melt(data=places4, id.vars='zipcode')
+ggplot(data = places4, aes( x = factor( zipcode ), y = value, fill = variable ) ) + geom_bar( stat = 'identity' ) + ggtitle("Variety of Resources by Zip")
+```
+
+You can also look at the boxplot for each of these zipcodes: 
+```{r}
+inputPanel(
+  selectInput("varZip", label = "Select ZipCode:",
+              choices = places3$zipcode, selected = '30024', multiple=FALSE)
+)
+
+renderPlot({
+  dataFilter = places3 %>% dplyr::filter(zipcode == input$varZip)
+  ggplot(data=dataFilter, mapping=aes(x=zipcode, y=num_place)) + geom_boxplot() + scale_x_discrete() + ggtitle("Spread of Resources by Zip")
+
+})
+```
+
+Through the bargraph and boxplots, it's easy to see zipcode '30024' is the most promising to house refugees.
+
+As confirmation - there are resources for many immigrants that can be found on the internet in the '30024' zipcode. Example [here](http://www.aarc-atlanta.org/).
 
 #**Appendix**  
 ***Tableau Concepts***  
@@ -232,20 +291,16 @@ pages [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A
 ***ggplot Concepts***  
 boxplot [1](#rfg)  
 histogram  
-packed bubbles  
-treemap  
-scatterplot  
-maps/actions  
-dashboard  
-trend model  
-barchart  
+scatterplot [1](#rfg)  
+maps  
+trend model [1](#rfg)  
+barchart  [1](#rfg)  
 ID set  
 crosstab   
-calculated fields  
-set  
-parameter  
+calculated fields [1](#rfg)  
+set [1](#clean)  
+parameter [1](#rfg)  
 dual axis  
-pages  
 
 ***SQL***  
 select [1](#sql)  
@@ -255,10 +310,12 @@ joins [1](#sql)
 
 ***dplyr methods***  
 select [1](#clean) [2](#apts)  
-mutate [1](#clean) [2](#apts) [3](#rfg) [4](#housing)  
+mutate [1](#clean) [2](#apts) [3](#rfg)   
 filter [1](#sql) [2](#apts)  
 group by [1](#apts)  
-summarise [1](#apts)  
+summarise [1](#apts) [2](#rfg)  
+arrange [1](#rfg)  
+top_n [1](#rfg)  
 
 ***other***  
 data model [1](#model)  
@@ -266,3 +323,4 @@ read_csv [1](#clean)
 write_csv [1](#clean)    
 regular expressions [1](#clean)  
 tidyr::gather  
+interactive visualizations [1](#apts) [2](#rfg)  
