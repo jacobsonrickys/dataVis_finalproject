@@ -1,7 +1,7 @@
 ---
-title: "FinalProject.Rmd"
-author: "Group 9"
-date: "12/1/2017"
+title: "Refugee Relocation"
+author: "Group 9 - Amanda Le, Stacy Nguyen, Rebekah Chang, Ricky Jacobson"
+date: "12/6/2017"
 output:
   html_document:
     code_folding: hide
@@ -13,6 +13,8 @@ resource_files:
 - .Renviron
 - Model1.png
 - Model2.png
+- school1.png
+- school2.png
 ---
 
 ```{r setup, include=TRUE}
@@ -228,25 +230,25 @@ renderPlot({
 })
 ```
 
-#<a name="units"></a>**Units**
-##Housing Units vs Median Rent
-The less rent costs, the bigger the percentage it takes from a family's, or one refugee's income, which Amanda has mentioned in a previous insight was odd. I wanted to attempt to put two of her visualizations into one, and this combined visualization agrees with her statement that when there is plenty of housing, the percentage it takes from income also decreases. 
+<!-- #<a name="units"></a>**Units** -->
+<!-- ##Housing Units vs Median Rent -->
+<!-- The less rent costs, the bigger the percentage it takes from a family's, or one refugee's income, which Amanda has mentioned in a previous insight was odd. I wanted to attempt to put two of her visualizations into one, and this combined visualization agrees with her statement that when there is plenty of housing, the percentage it takes from income also decreases.  -->
 ```{r, warning = FALSE}
-r <- ggplot(housing, aes(x=rent_percentage_of_income))
-r <- r + geom_line(aes(y = housing_units, colour = "Rent Percentage of Income"))
-  
-  r <- r + geom_point(aes(y = housing_units, colour = "Housing Units"))
-  #r <- r + ylim(limits = c(0,30))
-  # now adding the secondary axis, following the example in the help file ?scale_y_continuous
-  # and, very important, reverting the above transformation
-  r <- r + scale_y_continuous(sec.axis = sec_axis(~.*5, name = "Median Rent"))
-  #r <- r + scale_y_continuous(limits = c(0,1000))
-  r <- r + scale_colour_manual(values = c("pink", "purple"))
-  r <- r + labs(y = "Housing Units",
-                x = "Rent Percentage of Income",
-                colour = "Parameter")
-  r <- r + theme(legend.position = c(0.8, 0.9))
-r
+# r <- ggplot(housing, aes(x=rent_percentage_of_income))
+# r <- r + geom_line(aes(y = housing_units, colour = "Rent Percentage of Income"))
+#   
+#   r <- r + geom_point(aes(y = housing_units, colour = "Housing Units"))
+#   #r <- r + ylim(limits = c(0,30))
+#   # now adding the secondary axis, following the example in the help file ?scale_y_continuous
+#   # and, very important, reverting the above transformation
+#   r <- r + scale_y_continuous(sec.axis = sec_axis(~.*5, name = "Median Rent"))
+#   #r <- r + scale_y_continuous(limits = c(0,1000))
+#   r <- r + scale_colour_manual(values = c("pink", "purple"))
+#   r <- r + labs(y = "Housing Units",
+#                 x = "Rent Percentage of Income",
+#                 colour = "Parameter")
+#   r <- r + theme(legend.position = c(0.8, 0.9))
+# r
 ```
 
 
@@ -503,7 +505,6 @@ maps
 trend model [1](#rfg)  
 barchart  [1](#rfg)  
 ID set  
-crosstab   
 calculated fields [1](#rfg)  
 set [1](#clean)  
 parameter [1](#rfg)  
@@ -512,7 +513,6 @@ dual axis
 ***SQL***  
 select [1](#sql)  
 where [1](#sql)  
-group by  
 joins [1](#sql)  
 
 ***dplyr methods***  
@@ -529,6 +529,7 @@ data model [1](#model)
 read_csv [1](#clean)    
 write_csv [1](#clean)    
 regular expressions [1](#clean)  
+grep [1](#race)
 tidyr::gather [1](#race)  
 interactive visualizations [1](#apts) [2](#rfg)  
 
