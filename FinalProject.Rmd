@@ -142,7 +142,6 @@ usa_zcta.b25003a_001/usa_zcta.b25003_001 as white_homeowners
 FROM usa_zcta) as temp on temp.zcta = apartments.zipcode"),
   dataset = project
   )
-times <- times %>% dplyr::filter(is.element(zipcode, zipcodes)) %>% dplyr::mutate(market_time = dplyr::if_else(grepl("hour",mtime), 60*as.numeric(unlist(strsplit(mtime," "))[1])+as.numeric(unlist(strsplit(mtime," "))[3]),as.numeric(unlist(strsplit(mtime," "))[1])), school_time = dplyr::if_else(grepl("hour",stime), 60*as.numeric(unlist(strsplit(stime," "))[1])+as.numeric(unlist(strsplit(stime," "))[3]),as.numeric(unlist(strsplit(stime," "))[1]))) %>% dplyr::select(-mtime,-stime,-zipcode)
 
 units <- data.world::query(
   data.world::qry_sql("SELECT * from units"),
@@ -181,6 +180,17 @@ renderPlot({
 #<a name="units"></a>**Units**
 
 #<a name="race"></a>**Race Data (Title WIP)**
+The chart below tracks the time it takes to get from an apartment to the nearest market and school graphed against the percentage of the population that is white. Since Atlanta is in the South, historical racial segregation would lead to the assumption that conditions would worsen as communities become less white. This would theoretically manifest itself as longer travel times to get to school and the market. The chart below, however, tells a very different story.
+```{r echo = FALSE}
+times <- times %>% dplyr::filter(is.element(zipcode, zipcodes)) %>% dplyr::mutate(market_time = dplyr::if_else(grepl("hour",mtime), 60*as.numeric(unlist(strsplit(mtime," "))[1])+as.numeric(unlist(strsplit(mtime," "))[3]),as.numeric(unlist(strsplit(mtime," "))[1])), school_time = dplyr::if_else(grepl("hour",stime), 60*as.numeric(unlist(strsplit(stime," "))[1])+as.numeric(unlist(strsplit(stime," "))[3]),as.numeric(unlist(strsplit(stime," "))[1]))) %>% dplyr::select(-mtime,-stime,-zipcode)
+
+renderPlot({
+  times %>% dplyr::filter(market_time<150,school_time<150)%>% tidyr::gather(variable, value, -white_homeowners) %>% dplyr::mutate(label = dplyr::if_else(variable == "market_time", "Home to Market", "Home to School")) %>%  ggplot(aes(x = white_homeowners, y = value, color = label)) + geom_point() + labs(x = "Proportion of White Homeowners", y = "Travel Times (min)")
+})
+```
+It would appear that the proportion of homeowners who are white has no effect on the travel time to schools nor the travel time to markets. Furthermore, the travel time to school seems uniform across the board. While the data alone gives no indication for cause, it is possible that this uniform travel time to school is the result of the Supreme Court's decision in Brown v. Board of Education, which forced the integration of de jure segregated schools in the South.
+
+It also appears that the travel time to markets is polarized amongst two different extremes. In one case, the travel time is in the single digits; in the other, it's well over an hour. Unfortunately, the data alone is not sufficient to determine the cause.
 
 #<a name="rfg"></a>**Ideal Housing**
 First I created a series of boxplots to visualize multiple variables on our "ideal zipcode" subset discovered [here](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyLLFqp4RQGq5XUjes1Op_image.png&id=df0e03e7-38da-4bf1-9deb-ed10e35771d9&source=sb).
@@ -324,16 +334,6 @@ data model [1](#model)
 read_csv [1](#clean)    
 write_csv [1](#clean)    
 regular expressions [1](#clean)  
-tidyr::gather  
+tidyr::gather [1](#race)
 interactive visualizations [1](#apts) [2](#rfg)  
-
-The chart below tracks the time it takes to get from an apartment to the nearest market and school graphed against the percentage of the population that is white. Since Atlanta is in the South, historical racial segregation would lead to the assumption that conditions would worsen as communities become less white. This would theoretically manifest itself as longer travel times to get to school and the market. The chart below, however, tells a very different story.
-```{r echo = FALSE}
-renderPlot({
-  times %>% dplyr::filter(market_time<150,school_time<150)%>% tidyr::gather(variable, value, -white_homeowners) %>% dplyr::mutate(label = dplyr::if_else(variable == "market_time", "Home to Market", "Home to School")) %>%  ggplot(aes(x = white_homeowners, y = value, color = label)) + geom_point() + labs(x = "Proportion of White Homeowners", y = "Travel Times (min)")
-})
-```
-It would appear that the proportion of homeowners who are white has no effect on the travel time to schools nor the travel time to markets. Furthermore, the travel time to school seems uniform across the board. While the data alone gives no indication for cause, it is possible that this uniform travel time to school is the result of the Supreme Court's decision in Brown v. Board of Education, which forced the integration of de jure segregated schools in the South.
-
-It also appears that the travel time to markets is polarized amongst two different extremes. In one case, the travel time is in the single digits; in the other, it's well over an hour. Unfortunately, the data alone is not sufficient to determine the cause.
 
