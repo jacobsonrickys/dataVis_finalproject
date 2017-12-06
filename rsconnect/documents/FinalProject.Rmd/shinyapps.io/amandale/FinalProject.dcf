@@ -5,8 +5,8 @@ account: amandale
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 244994
-bundleId: 1119717
+bundleId: 1119757
 url: https://amandale.shinyapps.io/FinalProject/
-when: 1512597035.91631
+when: 1512598194.06541
 asMultiple: FALSE
 asStatic: FALSE
