@@ -170,7 +170,6 @@ attach(schools)
 attach(times)
 ```
 
-<<<<<<< HEAD
 #<a name="tableau"></a>**Initial Exploratory Analysis**
 ```{r}
 #allplaces
@@ -181,8 +180,6 @@ renderPlot({
 ```
 <iframe align = "center" width = "800" height = "800" src="https://public.tableau.com/profile/rebekah.chang#!/vizhome/PlaceType/PlaceType"/>
 
-=======
->>>>>>> a1d94a18051433947a97c2aa5271e22ed4f3ded0
 #<a name="resources"></a>**Resources**
 ## Types of Resources
 This cross-tab lists the types of resources within each zipcodes. There is no doubt that coming into a foreign place with little understanding of a culture is difficult, and the zipcodes that are most rich in resources can mean that refugees have just a slightly easier time getting settled, especially when it comes to local government offices to register their identities, grocery stores for sustenance, and places of worship, where they may find people coming from similar circumstances, and build connections, and communities of people who support each other while adjusting.
@@ -314,6 +311,81 @@ It would appear that the proportion of homeowners who are white has no effect on
 
 It also appears that the travel time to markets is polarized amongst two different extremes. In one case, the travel time is in the single digits; in the other, it's well over an hour. Unfortunately, the data alone is not sufficient to determine the cause.
 
+#<a name="rent"></a>**Rent Statistics**
+## Rent and Retail comparisons
+One can see both views and compare them side by side. Here is are the rent and retail histograms side by side. You can see that the histogram for retail varies a lot more than the histogram for rent.
+
+```{r}
+
+renderPlot({
+  units %>% ggplot(aes(rent)) + geom_histogram(binwidth = 100, color = "blue")
+})
+
+renderPlot({
+  units %>% ggplot(aes(retail)) + geom_histogram(binwidth = 100, color = "red")
+})
+
+```
+
+<iframe align = "center" width = "800" height = "800" src="https://public.tableau.com/profile/rebekah.chang#!/vizhome/FinalProject_417/Dashboard1"/>
+
+## Rent and Jobs by Apartment 
+Here's graph to compare the rent and jobs for each apartment complex. Interestingly most of the rent is below 2,000 which is pretty standard rent, but the number of jobs varies greatly. Filtered out outliers with jobs in the billions but I think it would be interesting to look more into the outliers like creekside crossing with 131 billion jobs
+```{r}
+q <- ggplot(units, aes(x=place_id))
+q <- q + geom_point(aes(y = jobs, colour = "Jobs"))
+  
+  q <- q + geom_point(aes(y = rent, colour = "Rent"))
+  q <- q + scale_y_continuous(sec.axis = sec_axis(~.*5, name = "Average Rent"))
+  q <- q + scale_colour_manual(values = c("blue", "red"))
+  q <- q + labs(y = "Average Jobs",
+                x = "Apartments",
+                colour = "Parameter")
+  q <- q + theme(legend.position = c(0.8, 0.9))
+q
+
+
+#p <- ggplot(units, aes(x=place_id))
+#p <- p + geom_point(aes(y = jobs, colour = "Jobs"))
+  
+#  p <- p + geom_point(aes(y = rent, colour = "Rent"))
+#  p <- p + scale_y_continuous(limits = c(0,10000))
+#  p <- p + scale_colour_manual(values = c("blue", "red"))
+#  p <- p + labs(y = "Average Jobs",
+#                x = "Apartments",
+#                colour = "Parameter")
+#  p <- p + theme(legend.position = c(0.8, 0.9))
+#p
+```
+
+<iframe align = "center" width = "800" height = "800" src="https://public.tableau.com/profile/rebekah.chang#!/vizhome/averentandjobdualaxis/AverageRentandJobsDualAxis?publish=yes"/>
+
+
+## Rent brackets
+Separates high (above 3k) , medium (1-3k ), and low rent (<1k) 
+```{r}
+lowrent <- units %>% dplyr::filter(rent<=1000) %>% dplyr::select(rent,place_id) %>% tbl_df()
+medrent <- units %>% dplyr::filter(rent>=1000 && rent<=3000) %>% dplyr::select(rent,place_id) %>% tbl_df()
+highrent <- units %>% dplyr::filter(rent>=3000) %>% dplyr::select(rent,place_id) %>% tbl_df()
+
+renderPlot({
+  lowrent %>% ggplot(aes(y = rent, x = place_id)) + geom_bar(stat = "identity", color = "blue")
+})
+
+renderPlot({
+  medrent %>% ggplot(aes(y = rent, x = place_id)) + geom_bar(stat = "identity", color = "red")
+})
+
+renderPlot({
+  highrent %>% ggplot(aes(y = rent, x = place_id)) + geom_bar(stat = "identity", color = "green")
+  
+})
+```
+There's definitely a lot more apartments with lower rents than higher. Retail is showed on the color scale. Interestingly the retail numbers seem to vary throughout each of the rent brackets though. 
+We're able to isolate the outliers in the data we can see four apartments: the berkshire terminis, indigo house, villas on briarcliff, and trace atlanta have extremely high rents. It would be interesting to look at these apartment and see why their rent is so much more expensive and why refugees are choosing these apartments.
+
+<iframe align = "center" width = "800" height = "800" src="https://public.tableau.com/profile/rebekah.chang#!/vizhome/IDset/Sheet1?publish=yes"/>
+
 #<a name="rfg"></a>**Ideal Housing**
 First I created a series of boxplots to visualize multiple variables on our "ideal zipcode" subset discovered [here](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyLLFqp4RQGq5XUjes1Op_image.png&id=df0e03e7-38da-4bf1-9deb-ed10e35771d9&source=sb).
 ```{r, warning = FALSE}
@@ -404,80 +476,6 @@ Through the bargraph and boxplots, it's easy to see zipcode '30024' is the most 
 As confirmation - there are resources for many immigrants that can be found on the internet in the '30024' zipcode. Example [here](http://www.aarc-atlanta.org/).
 
 
-#Rent and Retail Comparisons 
-One can see both views and compare them side by side. Here is are the rent and retail histograms side by side. You can see that the histogram for retail varies a lot more than the histogram for rent.
-
-```{r}
-
-renderPlot({
-  units %>% ggplot(aes(rent)) + geom_histogram(binwidth = 100, color = "blue")
-})
-
-renderPlot({
-  units %>% ggplot(aes(retail)) + geom_histogram(binwidth = 100, color = "red")
-})
-
-```
-
-<iframe align = "center" width = "800" height = "800" src="https://public.tableau.com/profile/rebekah.chang#!/vizhome/FinalProject_417/Dashboard1"/>
-
-#Rent and Jobs by Apartment 
-Here's graph to compare the rent and jobs for each apartment complex. Interestingly most of the rent is below 2,000 which is pretty standard rent, but the number of jobs varies greatly. Filtered out outliers with jobs in the billions but I think it would be interesting to look more into the outliers like creekside crossing with 131 billion jobs
-```{r}
-q <- ggplot(units, aes(x=place_id))
-q <- q + geom_point(aes(y = jobs, colour = "Jobs"))
-  
-  q <- q + geom_point(aes(y = rent, colour = "Rent"))
-  q <- q + scale_y_continuous(sec.axis = sec_axis(~.*5, name = "Average Rent"))
-  q <- q + scale_colour_manual(values = c("blue", "red"))
-  q <- q + labs(y = "Average Jobs",
-                x = "Apartments",
-                colour = "Parameter")
-  q <- q + theme(legend.position = c(0.8, 0.9))
-q
-
-
-#p <- ggplot(units, aes(x=place_id))
-#p <- p + geom_point(aes(y = jobs, colour = "Jobs"))
-  
-#  p <- p + geom_point(aes(y = rent, colour = "Rent"))
-#  p <- p + scale_y_continuous(limits = c(0,10000))
-#  p <- p + scale_colour_manual(values = c("blue", "red"))
-#  p <- p + labs(y = "Average Jobs",
-#                x = "Apartments",
-#                colour = "Parameter")
-#  p <- p + theme(legend.position = c(0.8, 0.9))
-#p
-```
-
-<iframe align = "center" width = "800" height = "800" src="https://public.tableau.com/profile/rebekah.chang#!/vizhome/averentandjobdualaxis/AverageRentandJobsDualAxis?publish=yes"/>
-
-
-#Rent brackets
-Separates high (above 3k) , medium (1-3k ), and low rent (<1k) 
-```{r}
-lowrent <- units %>% dplyr::filter(rent<=1000) %>% dplyr::select(rent,place_id) %>% tbl_df()
-medrent <- units %>% dplyr::filter(rent>=1000 && rent<=3000) %>% dplyr::select(rent,place_id) %>% tbl_df()
-highrent <- units %>% dplyr::filter(rent>=3000) %>% dplyr::select(rent,place_id) %>% tbl_df()
-
-renderPlot({
-  lowrent %>% ggplot(aes(y = rent, x = place_id)) + geom_bar(stat = "identity", color = "blue")
-})
-
-renderPlot({
-  medrent %>% ggplot(aes(y = rent, x = place_id)) + geom_bar(stat = "identity", color = "red")
-})
-
-renderPlot({
-  highrent %>% ggplot(aes(y = rent, x = place_id)) + geom_bar(stat = "identity", color = "green")
-  
-})
-```
-There's definitely a lot more apartments with lower rents than higher. Retail is showed on the color scale. Interestingly the retail numbers seem to vary throughout each of the rent brackets though. 
-We're able to isolate the outliers in the data we can see four apartments: the berkshire terminis, indigo house, villas on briarcliff, and trace atlanta have extremely high rents. It would be interesting to look at these apartment and see why their rent is so much more expensive and why refugees are choosing these apartments.
-
-<iframe align = "center" width = "800" height = "800" src="https://public.tableau.com/profile/rebekah.chang#!/vizhome/IDset/Sheet1?publish=yes"/>
-
 #**Appendix**  
 ***Tableau Concepts***  
 boxplot [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FiQQPondtTkKFjE2WWTRh_image.png&id=e362784c-4162-4d00-a1e1-f9111dc0d35d&source=sb)   
@@ -499,21 +497,21 @@ pages [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A
 
 ***ggplot Concepts***  
 boxplot [1](#rfg)  
-histogram  
+histogram [1](#rent)  
 scatterplot [1](#rfg)  
-maps  
 trend model [1](#rfg)  
 barchart  [1](#rfg)  
-ID set  
+ID set [1](#rent)  
 calculated fields [1](#rfg)  
 set [1](#clean)  
 parameter [1](#rfg)  
-dual axis  
+dual axis [1](#rent)  
 
 ***SQL***  
 select [1](#sql)  
 where [1](#sql)  
 joins [1](#sql)  
+subqueries [1](#sql)  
 
 ***dplyr methods***  
 select [1](#clean) [2](#apts)  
