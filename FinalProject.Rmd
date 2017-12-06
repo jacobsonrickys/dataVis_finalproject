@@ -52,11 +52,6 @@ write_csv(daycare, "/Users/amandale/Downloads/DataCleaning/daycarecenters.csv")
 
 We also 
 
-
-## Non SELECT * SQL
-
-Import the data from data.world, where the bulk of the work is done on the back end.
-
 ```{r}
 project <- "https://data.world/rc38246/f-17-edv-project-5"
 data.world::set_config(cfg_env("DW_API"))
@@ -64,10 +59,7 @@ schools <- data.world::query(
   data.world::qry_sql("SELECT s.latitude AS slat, s.longitude AS slong, school_name, a.latitude AS alat, a.longitude AS along, apartment_name FROM schools AS s cross join apartments AS a WHERE s.grades = 'Elementary' and school_type = 'public'"),
   dataset = project
   )
-times <- data.world::query(
-  data.world::qry_sql("SELECT apartment_name, market_time, school_time FROM apartments JOIN times using(place_id)"),
-  dataset = project
-  )
+
 zcta <- data.world::query(
   data.world::qry_sql("SELECT usa_zcta.zcta , usa_zcta.b25001_001 as housing_units , usa_zcta.b25058_001 as median_rent, usa_zcta.b25071_001 as rent_percentage_of_income
 FROM usa_zcta"),
@@ -91,6 +83,14 @@ daycarecenters.latitude, daycarecenters.longitude, daycarecenters.location, dayc
 FROM daycarecenters"),
   dataset = project
 )
+
+times <- data.world::query(
+  data.world::qry_sql("SELECT zipcode, white_homeowners, market_time, school_time FROM apartments JOIN times using(place_id) JOIN (SELECT usa_zcta.zcta,
+usa_zcta.b25003a_001/usa_zcta.b25003_001 as white_homeowners
+FROM usa_zcta) as temp on temp.zcta = apartments.zipcode"),
+  dataset = project
+  )
+times <- times %>% dplyr::filter(is.element(zipcode, zipcodes))
 
 units <- data.world::query(
   data.world::qry_sql("SELECT * from units"),
@@ -130,7 +130,7 @@ Looking into most successful agents and teams
 topics coverered - piplines. select, mutate , group_by, summarize, arrange
 ```{r echo = FALSE}
 renderPlot({
-  times %>% tidyr::gather(variable, value, -apartment_name) %>% ggplot(aes(x = apartment_name, y = value, color = variable)) + geom_point()
+  times %>% dplyr::select(-zipcode) %>% tidyr::gather(variable, value, -white_homeowners) %>% ggplot(aes(x = white_homeowners, y = value, color = variable)) + geom_point()
 })
 
 
