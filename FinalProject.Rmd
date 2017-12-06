@@ -2,8 +2,6 @@
 title: "FinalProject.Rmd"
 author: "Group 9"
 date: "12/1/2017"
-resource_files:
-- .Renviron
 output:
   html_document:
     code_folding: hide
@@ -11,6 +9,10 @@ output:
     toc_depth: 4
     toc_float: yes
 runtime: shiny
+resource_files:
+- .Renviron
+- Model1.png
+- Model2.png
 ---
 
 ```{r setup, include=TRUE}
@@ -20,16 +22,18 @@ require(MASS)
 require(ISLR)
 require(dplyr)
 require(ggplot2)
+require(gridExtra)
+require(reshape2)
 ```
-## Data Model
+#<a name="model"></a>**Data Model**
 
-![Our original data model was rather messy, as we had ~20 tables as well as the US Census Data.](/Users/amandale/Desktop/Screen Shot 2017-11-28 at 5.47.20 PM.png)
+![Our original data model was rather messy, as we had ~20 tables as well as the US Census Data.](./Model1.png)
 
-![After an extensive process of cleaning data, this is the resulting data model.](/Users/amandale/Desktop/Screen Shot 2017-11-29 at 12.12.44 AM.png)
+![After an extensive process of cleaning data, this is the resulting data model.](./Model2.png)
 
 
 
-## Data Cleaning 
+#<a name="clean"></a>**Data Cleaning** 
 We initially had 20 tables to clean - so for simplicity's sake we will just show an example of how we cleaned a few of these twenty. 
 
 ```{r, eval = FALSE}
@@ -78,6 +82,12 @@ places = rbind(places, supermarkets)
 places = rbind(places, worship)
 ```
 
+
+#<a name="sql"></a>**SQL Queries**
+
+Import the data from data.world, where the bulk of the work is done on the back end.
+
+
 ```{r}
 project <- "https://data.world/rc38246/f-17-edv-project-5"
 data.world::set_config(cfg_env("DW_API"))
@@ -86,9 +96,25 @@ schools <- data.world::query(
   dataset = project
   )
 
+places <- data.world::query(
+  data.world::qry_sql("SELECT place_name, place, market_time, school_time FROM places JOIN times using(place_id)"),
+  dataset = project
+  )
+
+places2 <- data.world::query(
+  data.world::qry_sql("SELECT places.place_id, places.zipcode, places.place_type, places.place_name, places.latitude, places.longitude, places.place
+FROM places"),
+  dataset = project
+)
+
 zcta <- data.world::query(
-  data.world::qry_sql("SELECT usa_zcta.zcta , usa_zcta.b25001_001 as housing_units , usa_zcta.b25058_001 as median_rent, usa_zcta.b25071_001 as rent_percentage_of_income
-FROM usa_zcta"),
+  data.world::qry_sql("SELECT usa_zcta.zcta , usa_zcta.b25001_001 as housing_units , usa_zcta.b25058_001 as median_rent, usa_zcta.b25071_001 as rent_percentage_of_income,
+usa_zcta.b25003a_001/usa_zcta.b25003_001 as white_homeowners,
+usa_zcta.b25003b_001/usa_zcta.b25003_001 as black_homeowners,
+usa_zcta.b25003c_001/usa_zcta.b25003_001 as native_homeowners,
+usa_zcta.b25003d_001/usa_zcta.b25003_001 as asian_homeowners,
+usa_zcta.b25003e_001/usa_zcta.b25003_001 as pacific_islander_homeowners,
+usa_zcta.b25003f_001/usa_zcta.b25003_001 as other_homeowners FROM usa_zcta"),
   dataset = project
 )
 
@@ -127,7 +153,9 @@ attach(schools)
 attach(times)
 ```
 
-## How many apartments are near how many public elementary schools?
+#<a name="tableau"></a>**Initial Exploratory Analysis**
+
+#<a name="apts"></a>**How many apartments are near how many public elementary schools?**
 Adjusting the slider below changes the range. If we set the slider to it's minimum value, we see that all apartments in the data set are within 1 km from a public elementary school. This means that the local municipalities did a good job of ensuring public education for their constituents.
 
 Increasing the range causes the data to take a Boltzmann-like distribution, which means that the majority of apartments are near only a handful of schools, and the number of outliers decrease as you progress rightward on the graph. 
@@ -150,33 +178,154 @@ renderPlot({
 })
 ```
 
-##Ideal Refugee Location, pt. 2
+#<a name="units"></a>**Units**
 
-```{r}
-ggplot(data = zcta, mapping = aes(x=zcta, y=median_rent)) + geom_boxplot() + ggtitle("Rent Dist. by Zip")
+#<a name="race"></a>**Race Data (Title WIP)**
 
-ggplot(data = zcta, mapping = aes(x=zcta, y=rent_percentage_of_income)) + geom_boxplot() + ggtitle("Rent % by Zip")
+#<a name="rfg"></a>**Ideal Housing**
+First I created a series of boxplots to visualize multiple variables on our "ideal zipcode" subset discovered [here](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyLLFqp4RQGq5XUjes1Op_image.png&id=df0e03e7-38da-4bf1-9deb-ed10e35771d9&source=sb).
+```{r, warning = FALSE}
 
-ggplot(data = zcta, mapping = aes(x=zcta, y=median_rent)) + geom_boxplot() + ggtitle("Rent Dist. by Zip")
+plot1 = ggplot(data = zcta, mapping = aes(x=zcta, y=median_rent)) + geom_boxplot() + ggtitle("Rent Dist")
+
+plot2 = ggplot(data = zcta, mapping = aes(x=zcta, y=rent_percentage_of_income)) + geom_boxplot() + ggtitle("Rent %")
+
+plot3 = ggplot(data = zcta, mapping = aes(x=zcta, y=housing_units)) + geom_boxplot() + ggtitle("Units")
 
 zcta2 = zcta %>% dplyr::mutate(accessible_housing = housing_units/median_rent)
-ggplot(data = zcta2, mapping = aes(x=zcta, y=accessible_housing)) + geom_boxplot() + ggtitle("Accessible Housing by Zip")
+
+plot4 = ggplot(data = zcta2, mapping = aes(x=zcta, y=accessible_housing)) + geom_boxplot() + ggtitle("Acc. Housing")
+
+grid.arrange(plot1, plot2, plot3, plot4, ncol=4) 
+
+```
+The most important to notice is the "accessible housing" score. This is a calculated field, where "accessible housing" = "housing units" / "median rent". We will use this later in evalutating ideal zipcodes for refugees to reside in. Ideally, we would like an "accessible housing" score of at least 15. 
+
+Next we look at how many units are available per zipcode: 
+```{r}
+ggplot(data = zcta, mapping = aes(x=zcta, y=housing_units)) + geom_bar(stat="identity") + ggtitle("Housing Units Available by Zip") + scale_x_discrete()
 ```
 
-##Housing, pt. 1
-
+At first glance, as the rent percentage increases, median rent decreases. Does this intuitively make sense?
 ```{r}
-ggplot(data = zcta, mapping = aes(x=zcta, y=housing_units)) + geom_bar(stat="identity") + ggtitle("Housing Units Available by Zip")
-
 ggplot(data = zcta, mapping = aes(x=rent_percentage_of_income, y=median_rent)) + geom_point() + geom_smooth(method = lm, fullrange= TRUE, se=FALSE, color = "black" ) + ggtitle("Rent Analytics ") 
+```
 
+Answer: Not really. We then created a parameter called "housing_fence", as we are primarily interested in zipcodes with plenty of housing. In this example, our "housing_fence" is 5000. 
+```{r}
 zcta3 = zcta %>% dplyr::mutate(housing_plentiful = ifelse(housing_units < 5000, "false", "true"))
-
 ggplot(data = zcta3, mapping = aes(x=rent_percentage_of_income, y=median_rent, color = housing_plentiful)) + geom_point() + geom_smooth(method = lm, fullrange= TRUE, se=FALSE ) + ggtitle("Rent Analytics 2")
 ```
+We can see that rent goes down when there is plenty of housing - which makes a lot more sense.
+
+Experiment below with changing the "housing fence," and how it affects trend lines in segregated groups. 
+
+```{r}
+housing_min = min(zcta$housing_units)
+housing_max = max(zcta$housing_units)
 
 
-## dplyr Stuff
+sliderInput("varFence", "Housing Fence:", min = housing_min, max = housing_max, value = 5)
+
+renderPlot({
+  zcta %>% dplyr::mutate(housing_plentiful = ifelse(housing_units < input$varFence, "false", "true")) %>% ggplot( mapping = aes(x=rent_percentage_of_income, y=median_rent, color = housing_plentiful)) + geom_point() + geom_smooth(method = lm, fullrange= TRUE, se=FALSE ) + ggtitle("Rent Analytics 3")
+})
+```
+
+We then take the top 10 zipcodes of this subset by the availability of housing units. I wanted to look at the racial makeup of these areas - the reasoning being that greater diversity results in an easier acclimation into the community for refugees. 
+```{r}
+zcta4 = zcta %>% dplyr::arrange(desc(housing_units)) %>% dplyr::top_n(10, housing_units) %>% dplyr::mutate(minority_perc = 1 - white_homeowners)
+ggplot(data = zcta4, mapping = aes(x=zcta, y=minority_perc)) + geom_bar(stat="identity")+ggtitle("% of Minority Homeowners by Zipcode") + scale_x_discrete()
+```
+
+When we take zipcodes with greater than 25% minorities, we get the following zipcodes:
+```{r}
+zcta5 = zcta4 %>% dplyr::filter(minority_perc > .25)
+zcta5$zcta
+```
+
+Lastly, we will look at the variety of places available in these four zipcodes: 
+```{r, warning = FALSE}
+places3 = places2 %>% dplyr::filter(is.element(zipcode, zcta5$zcta)) %>% select(zipcode, place_type) %>% dplyr::group_by(zipcode, place_type) %>% summarise(num_place= n())
+
+places4 = dcast(data = places3, formula(zipcode~place_type, value.var = num_place, fun.aggregate = sum))
+places4 = melt(data=places4, id.vars='zipcode')
+ggplot(data = places4, aes( x = factor( zipcode ), y = value, fill = variable ) ) + geom_bar( stat = 'identity' ) + ggtitle("Variety of Resources by Zip")
+```
+
+You can also look at the boxplot for each of these zipcodes: 
+```{r}
+inputPanel(
+  selectInput("varZip", label = "Select ZipCode:",
+              choices = places3$zipcode, selected = '30024', multiple=FALSE)
+)
+
+renderPlot({
+  dataFilter = places3 %>% dplyr::filter(zipcode == input$varZip)
+  ggplot(data=dataFilter, mapping=aes(x=zipcode, y=num_place)) + geom_boxplot() + scale_x_discrete() + ggtitle("Spread of Resources by Zip")
+
+})
+```
+
+Through the bargraph and boxplots, it's easy to see zipcode '30024' is the most promising to house refugees.
+
+As confirmation - there are resources for many immigrants that can be found on the internet in the '30024' zipcode. Example [here](http://www.aarc-atlanta.org/).
+
+#**Appendix**  
+***Tableau Concepts***  
+boxplot [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FiQQPondtTkKFjE2WWTRh_image.png&id=e362784c-4162-4d00-a1e1-f9111dc0d35d&source=sb)   
+histogram [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyylcBAOsQYqHIum7NIjs_image.png&id=46205490-5cd9-4785-80a3-2484fbbe910f&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FdpOkzLT9qREjEJ41Lcvw_Worship1.png&id=47640be2-b17b-4ebd-9a75-d968fec84196&source=sb) [3](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FcLfg5bC4QoiKozJxJD4Q_school1.png&id=0d7038d0-0916-44ef-828d-4e42e00b6982&source=sb) [4](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FofCFxvrTQOKZftCJypZQ_image.png&id=d28e82a5-c90b-4aa8-8b7b-846e762978ea&source=sb)  
+packed bubbles [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2F9BkDqC9FT7qoGyBHpMnu_Daycare%2520Center.png&id=e07d5374-fbd9-43b0-8b49-6a797be72f1f&source=sb)  
+treemap [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2F4Q7Pc8YT4yTuUy3wIRrB_image.png&id=33a98ef9-a3ed-4d7b-822f-97d66aa82bef&source=sb)  
+scatterplot [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FUETCkNnRcedvmbVpaYD4_medianvhousing.png&id=c4a739e8-2601-4dc6-9936-b8781f901e62&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyX179ukTSdCaVTDkHP47_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb)  
+maps/actions [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FioiPLtxGTCKEtL6DaOjS_image.png&id=014552b8-a4ad-4be2-ab3e-84fca506b7b5&source=sb)  
+dashboard [1](https://data.world/rc38246/f-17-edv-project-5/insights/46205490-5cd9-4785-80a3-2484fbbe910f)  
+trend model [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2Fbvr8mJoTmCMsCyqzHJ2t_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb)  
+barchart [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FM2CZgoiSRVCMhE3SkKJv_image.png&id=ab42f491-a0a3-4170-b210-4bad400fad06&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyX179ukTSdCaVTDkHP47_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb)  
+ID set [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FM2CZgoiSRVCMhE3SkKJv_image.png&id=ab42f491-a0a3-4170-b210-4bad400fad06&source=sb)  
+crosstab [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FRgsajxEUSo6W4Fbszz0H_crosstab2.png&id=6379e9bc-e0c8-45d2-ba5c-6351b1424f1f&source=sb)   
+calculated fields [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyX179ukTSdCaVTDkHP47_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FiQQPondtTkKFjE2WWTRh_image.png&id=e362784c-4162-4d00-a1e1-f9111dc0d35d&source=sb)  
+set [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FiQQPondtTkKFjE2WWTRh_image.png&id=e362784c-4162-4d00-a1e1-f9111dc0d35d&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyLLFqp4RQGq5XUjes1Op_image.png&id=df0e03e7-38da-4bf1-9deb-ed10e35771d9&source=sb)
+parameter [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyX179ukTSdCaVTDkHP47_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb)   
+dual axis [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FTpS2000vRCSU6Fr9tfaT_image.png&id=a9dc7bba-08a5-47fc-a3c1-1a5c4f3e5a85&source=sb)  
+pages [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyLLFqp4RQGq5XUjes1Op_image.png&id=df0e03e7-38da-4bf1-9deb-ed10e35771d9&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights/0d7038d0-0916-44ef-828d-4e42e00b6982)  
+
+***ggplot Concepts***  
+boxplot [1](#rfg)  
+histogram  
+scatterplot [1](#rfg)  
+maps  
+trend model [1](#rfg)  
+barchart  [1](#rfg)  
+ID set  
+crosstab   
+calculated fields [1](#rfg)  
+set [1](#clean)  
+parameter [1](#rfg)  
+dual axis  
+
+***SQL***  
+select [1](#sql)  
+where [1](#sql)  
+group by  
+joins [1](#sql)  
+
+***dplyr methods***  
+select [1](#clean) [2](#apts)  
+mutate [1](#clean) [2](#apts) [3](#rfg)   
+filter [1](#sql) [2](#apts)  
+group by [1](#apts)  
+summarise [1](#apts) [2](#rfg)  
+arrange [1](#rfg)  
+top_n [1](#rfg)  
+
+***other***  
+data model [1](#model)  
+read_csv [1](#clean)    
+write_csv [1](#clean)    
+regular expressions [1](#clean)  
+tidyr::gather  
+interactive visualizations [1](#apts) [2](#rfg)  
 
 The chart below tracks the time it takes to get from an apartment to the nearest market and school graphed against the percentage of the population that is white. Since Atlanta is in the South, historical racial segregation would lead to the assumption that conditions would worsen as communities become less white. This would theoretically manifest itself as longer travel times to get to school and the market. The chart below, however, tells a very different story.
 ```{r echo = FALSE}
@@ -187,3 +336,4 @@ renderPlot({
 It would appear that the proportion of homeowners who are white has no effect on the travel time to schools nor the travel time to markets. Furthermore, the travel time to school seems uniform across the board. While the data alone gives no indication for cause, it is possible that this uniform travel time to school is the result of the Supreme Court's decision in Brown v. Board of Education, which forced the integration of de jure segregated schools in the South.
 
 It also appears that the travel time to markets is polarized amongst two different extremes. In one case, the travel time is in the single digits; in the other, it's well over an hour. Unfortunately, the data alone is not sufficient to determine the cause.
+
