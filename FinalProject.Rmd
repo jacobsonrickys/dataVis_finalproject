@@ -87,6 +87,7 @@ places = rbind(places, worship)
 
 Import the data from data.world, where the bulk of the work is done on the back end.
 
+
 ```{r}
 project <- "https://data.world/rc38246/f-17-edv-project-5"
 data.world::set_config(cfg_env("DW_API"))
@@ -94,6 +95,7 @@ schools <- data.world::query(
   data.world::qry_sql("SELECT s.latitude AS slat, s.longitude AS slong, school_name, a.latitude AS alat, a.longitude AS along, apartment_name FROM schools AS s cross join apartments AS a WHERE s.grades = 'Elementary' and school_type = 'public'"),
   dataset = project
   )
+
 places <- data.world::query(
   data.world::qry_sql("SELECT place_name, place, market_time, school_time FROM places JOIN times using(place_id)"),
   dataset = project
@@ -134,13 +136,21 @@ FROM daycarecenters"),
   dataset = project
 )
 
+times <- data.world::query(
+  data.world::qry_sql("SELECT zipcode, white_homeowners, market_time as mtime, school_time as stime FROM apartments JOIN times using(place_id) JOIN (SELECT usa_zcta.zcta,
+usa_zcta.b25003a_001/usa_zcta.b25003_001 as white_homeowners
+FROM usa_zcta) as temp on temp.zcta = apartments.zipcode"),
+  dataset = project
+  )
+times <- times %>% dplyr::filter(is.element(zipcode, zipcodes)) %>% dplyr::mutate(market_time = dplyr::if_else(grepl("hour",mtime), 60*as.numeric(unlist(strsplit(mtime," "))[1])+as.numeric(unlist(strsplit(mtime," "))[3]),as.numeric(unlist(strsplit(mtime," "))[1])), school_time = dplyr::if_else(grepl("hour",stime), 60*as.numeric(unlist(strsplit(stime," "))[1])+as.numeric(unlist(strsplit(stime," "))[3]),as.numeric(unlist(strsplit(stime," "))[1]))) %>% dplyr::select(-mtime,-stime,-zipcode)
+
 units <- data.world::query(
   data.world::qry_sql("SELECT * from units"),
   dataset = project
 )
 
 attach(schools)
-attach(places)
+attach(times)
 ```
 
 #<a name="tableau"></a>**Initial Exploratory Analysis**
@@ -166,15 +176,6 @@ sliderInput("range", "Range (in km):", min = 1, max = 10, value = 5)
 renderPlot({
   distances %>% dplyr::filter(dist <= input$range) %>% dplyr::group_by(apartment_name) %>% dplyr::summarise(num_schools = n()) %>% ggplot(aes(num_schools)) + geom_bar() + labs(x = "Number of Schools", y = "Number of Apartments")
 })
-# grouped <- data %>% dplyr::group_by(agent_key) %>% summarise(sum_with_offer = sum(calls_with_offer), sum_with_accept = sum(calls_with_accept), sum_offer_applied = sum(calls_offer_applied)) 
-# 
-# gathered <- grouped %>% tidyr::gather(variable,value, -agent_key)
-# 
-# renderPlot({
-#   gathered %>% ggplot(aes(x = agent_key, y = value, color = variable)) + geom_smooth(se = FALSE)
-# })
-# 
-# attach(grouped)
 ```
 
 #<a name="units"></a>**Units**
@@ -222,6 +223,7 @@ Experiment below with changing the "housing fence," and how it affects trend lin
 ```{r}
 housing_min = min(zcta$housing_units)
 housing_max = max(zcta$housing_units)
+
 
 sliderInput("varFence", "Housing Fence:", min = housing_min, max = housing_max, value = 5)
 
@@ -324,3 +326,14 @@ write_csv [1](#clean)
 regular expressions [1](#clean)  
 tidyr::gather  
 interactive visualizations [1](#apts) [2](#rfg)  
+
+The chart below tracks the time it takes to get from an apartment to the nearest market and school graphed against the percentage of the population that is white. Since Atlanta is in the South, historical racial segregation would lead to the assumption that conditions would worsen as communities become less white. This would theoretically manifest itself as longer travel times to get to school and the market. The chart below, however, tells a very different story.
+```{r echo = FALSE}
+renderPlot({
+  times %>% dplyr::filter(market_time<150,school_time<150)%>% tidyr::gather(variable, value, -white_homeowners) %>% dplyr::mutate(label = dplyr::if_else(variable == "market_time", "Home to Market", "Home to School")) %>%  ggplot(aes(x = white_homeowners, y = value, color = label)) + geom_point() + labs(x = "Proportion of White Homeowners", y = "Travel Times (min)")
+})
+```
+It would appear that the proportion of homeowners who are white has no effect on the travel time to schools nor the travel time to markets. Furthermore, the travel time to school seems uniform across the board. While the data alone gives no indication for cause, it is possible that this uniform travel time to school is the result of the Supreme Court's decision in Brown v. Board of Education, which forced the integration of de jure segregated schools in the South.
+
+It also appears that the travel time to markets is polarized amongst two different extremes. In one case, the travel time is in the single digits; in the other, it's well over an hour. Unfortunately, the data alone is not sufficient to determine the cause.
+
