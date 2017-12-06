@@ -2,8 +2,6 @@
 title: "FinalProject.Rmd"
 author: "Group 9"
 date: "12/1/2017"
-resource_files:
-- .Renviron
 output:
   html_document:
     code_folding: hide
@@ -11,6 +9,10 @@ output:
     toc_depth: 4
     toc_float: yes
 runtime: shiny
+resource_files:
+- .Renviron
+- Model1.png
+- Model2.png
 ---
 
 ```{r setup, include=TRUE}
@@ -21,15 +23,15 @@ require(ISLR)
 require(dplyr)
 require(ggplot2)
 ```
-## Data Model
+#<a name="model"></a>**Data Model**
 
-![Our original data model was rather messy, as we had ~20 tables as well as the US Census Data.](/Users/amandale/Desktop/Screen Shot 2017-11-28 at 5.47.20 PM.png)
+![Our original data model was rather messy, as we had ~20 tables as well as the US Census Data.](./Model1.png)
 
-![After an extensive process of cleaning data, this is the resulting data model.](/Users/amandale/Desktop/Screen Shot 2017-11-29 at 12.12.44 AM.png)
+![After an extensive process of cleaning data, this is the resulting data model.](./Model2.png)
 
 
 
-## Data Cleaning 
+#<a name="clean"></a>**Data Cleaning** 
 We initially had 20 tables to clean - so for simplicity's sake we will just show an example of how we cleaned a few of these twenty. 
 
 ```{r, eval = FALSE}
@@ -79,7 +81,7 @@ places = rbind(places, worship)
 ```
 
 
-## Non SELECT * SQL
+#<a name="sql"></a>**SQL Queries**
 
 Import the data from data.world, where the bulk of the work is done on the back end.
 
@@ -127,7 +129,9 @@ attach(schools)
 attach(places)
 ```
 
-## How many apartments are near how many public elementary schools?
+#<a name="tableau"></a>**Initial Exploratory Analysis**
+
+#<a name="apts"></a>**How many apartments are near how many public elementary schools?**
 Adjusting the slider below changes the range. If we set the slider to it's minimum value, we see that all apartments in the data set are within 1 km from a public elementary school. This means that the local municipalities did a good job of ensuring public education for their constituents.
 
 Increasing the range causes the data to take a Boltzmann-like distribution, which means that the majority of apartments are near only a handful of schools, and the number of outliers decrease as you progress rightward on the graph. 
@@ -159,8 +163,11 @@ renderPlot({
 # attach(grouped)
 ```
 
-##Ideal Refugee Location, pt. 2
+#<a name="units"></a>**Units**
 
+#<a name="race"></a>**Race Data (Title WIP)**
+
+#<a name="rfg"></a>**Ideal Refugee Location, pt. 2**
 ```{r}
 ggplot(data = zcta, mapping = aes(x=zcta, y=median_rent)) + geom_boxplot() + ggtitle("Rent Dist. by Zip")
 
@@ -172,8 +179,7 @@ zcta2 = zcta %>% dplyr::mutate(accessible_housing = housing_units/median_rent)
 ggplot(data = zcta2, mapping = aes(x=zcta, y=accessible_housing)) + geom_boxplot() + ggtitle("Accessible Housing by Zip")
 ```
 
-##Housing, pt. 1
-
+#<a name="housing"></a>**Housing, pt. 1**
 ```{r}
 ggplot(data = zcta, mapping = aes(x=zcta, y=housing_units)) + geom_bar(stat="identity") + ggtitle("Housing Units Available by Zip")
 
@@ -185,7 +191,7 @@ ggplot(data = zcta3, mapping = aes(x=rent_percentage_of_income, y=median_rent, c
 ```
 
 
-## dplyr Stuff
+#<a name="dplyr"></a>**dplyr stuff**
 
 Looking into most successful agents and teams
 topics coverered - piplines. select, mutate , group_by, summarize, arrange
@@ -203,3 +209,60 @@ topics coverered - piplines. select, mutate , group_by, summarize, arrange
 # })
 
 ```
+
+#**Appendix**  
+***Tableau Concepts***  
+boxplot [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FiQQPondtTkKFjE2WWTRh_image.png&id=e362784c-4162-4d00-a1e1-f9111dc0d35d&source=sb)   
+histogram [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyylcBAOsQYqHIum7NIjs_image.png&id=46205490-5cd9-4785-80a3-2484fbbe910f&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FdpOkzLT9qREjEJ41Lcvw_Worship1.png&id=47640be2-b17b-4ebd-9a75-d968fec84196&source=sb) [3](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FcLfg5bC4QoiKozJxJD4Q_school1.png&id=0d7038d0-0916-44ef-828d-4e42e00b6982&source=sb) [4](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FofCFxvrTQOKZftCJypZQ_image.png&id=d28e82a5-c90b-4aa8-8b7b-846e762978ea&source=sb)  
+packed bubbles [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2F9BkDqC9FT7qoGyBHpMnu_Daycare%2520Center.png&id=e07d5374-fbd9-43b0-8b49-6a797be72f1f&source=sb)  
+treemap [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2F4Q7Pc8YT4yTuUy3wIRrB_image.png&id=33a98ef9-a3ed-4d7b-822f-97d66aa82bef&source=sb)  
+scatterplot [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FUETCkNnRcedvmbVpaYD4_medianvhousing.png&id=c4a739e8-2601-4dc6-9936-b8781f901e62&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyX179ukTSdCaVTDkHP47_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb)  
+maps/actions [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FioiPLtxGTCKEtL6DaOjS_image.png&id=014552b8-a4ad-4be2-ab3e-84fca506b7b5&source=sb)  
+dashboard [1](https://data.world/rc38246/f-17-edv-project-5/insights/46205490-5cd9-4785-80a3-2484fbbe910f)  
+trend model [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2Fbvr8mJoTmCMsCyqzHJ2t_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb)  
+barchart [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FM2CZgoiSRVCMhE3SkKJv_image.png&id=ab42f491-a0a3-4170-b210-4bad400fad06&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyX179ukTSdCaVTDkHP47_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb)  
+ID set [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FM2CZgoiSRVCMhE3SkKJv_image.png&id=ab42f491-a0a3-4170-b210-4bad400fad06&source=sb)  
+crosstab [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FRgsajxEUSo6W4Fbszz0H_crosstab2.png&id=6379e9bc-e0c8-45d2-ba5c-6351b1424f1f&source=sb)   
+calculated fields [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyX179ukTSdCaVTDkHP47_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FiQQPondtTkKFjE2WWTRh_image.png&id=e362784c-4162-4d00-a1e1-f9111dc0d35d&source=sb)  
+set [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FiQQPondtTkKFjE2WWTRh_image.png&id=e362784c-4162-4d00-a1e1-f9111dc0d35d&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyLLFqp4RQGq5XUjes1Op_image.png&id=df0e03e7-38da-4bf1-9deb-ed10e35771d9&source=sb)
+parameter [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyX179ukTSdCaVTDkHP47_image.png&id=8cb47d40-ba0c-4fa1-b57b-9db57145f93f&source=sb)   
+dual axis [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FTpS2000vRCSU6Fr9tfaT_image.png&id=a9dc7bba-08a5-47fc-a3c1-1a5c4f3e5a85&source=sb)  
+pages [1](https://data.world/rc38246/f-17-edv-project-5/insights?anchor=https%3A%2F%2Fmedia.data.world%2FyLLFqp4RQGq5XUjes1Op_image.png&id=df0e03e7-38da-4bf1-9deb-ed10e35771d9&source=sb) [2](https://data.world/rc38246/f-17-edv-project-5/insights/0d7038d0-0916-44ef-828d-4e42e00b6982)  
+
+***ggplot Concepts***  
+boxplot [1](#rfg)  
+histogram  
+packed bubbles  
+treemap  
+scatterplot  
+maps/actions  
+dashboard  
+trend model  
+barchart  
+ID set  
+crosstab   
+calculated fields  
+set  
+parameter  
+dual axis  
+pages  
+
+***SQL***  
+select [1](#sql)  
+where [1](#sql)  
+group by  
+joins [1](#sql)  
+
+***dplyr methods***  
+select [1](#clean) [2](#apts)  
+mutate [1](#clean) [2](#apts) [3](#rfg) [4](#housing)  
+filter [1](#sql) [2](#apts)  
+group by [1](#apts)  
+summarise [1](#apts)  
+
+***other***  
+data model [1](#model)  
+read_csv [1](#clean)    
+write_csv [1](#clean)    
+regular expressions [1](#clean)  
+tidyr::gather  
